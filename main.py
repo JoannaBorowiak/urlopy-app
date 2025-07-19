@@ -7,12 +7,11 @@ import crud
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.requests import Request
-
-
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
+app.add_middleware(SessionMiddleware, secret_key="klucz")
 
 Base.metadata.create_all(bind=engine)
 
@@ -100,11 +99,14 @@ def submit_leave_form(
     date_from: str = Form(...),
     date_to: str = Form(...),
     comment: str = Form(None),
-    x_user_id: int = Form(...),
     db: Session = Depends(get_db)
 ):
+    user_id = request.session.get("user_id")  # <- to musi być W CIELE FUNKCJI
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+
     new_leave = Leave(
-        user_id=x_user_id,
+        user_id=user_id,
         date_from=date_from,
         date_to=date_to,
         comment=comment
@@ -114,3 +116,24 @@ def submit_leave_form(
     return RedirectResponse(url="/leaves/html", status_code=303)
 
 
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request, db: Session = Depends(get_db)):
+    users = db.query(Userm).all()
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "users": users
+    })
+
+@app.post("/login")
+def login(request: Request, db: Session = Depends(get_db), 
+          username: str = Form(...), password: str = Form(...)):
+    user = db.query(Userm).filter_by(name=username).first()
+    if not user or user.password != password:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Nieprawidłowa nazwa użytkownika lub hasło",
+            "users": db.query(Userm).all()
+        }, status_code=401)
+
+    request.session["user_id"] = user.id
+    return RedirectResponse(url="/leaves/html", status_code=303)

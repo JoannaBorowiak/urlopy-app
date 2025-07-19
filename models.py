@@ -7,6 +7,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String)
     role = Column(String, default = "employee")
 
     leaves = relationship("Leave", back_populates="owner")
