@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Header, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.requests import Request
 from sqlalchemy.orm import Session 
 from database import engine, SessionLocal
 from models import Base, User as Userm, Leave
@@ -43,7 +42,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.get("/users/", response_model=list[User])
-def read_leaves(db: Session = Depends(get_db)):
+def get_leaves(db: Session = Depends(get_db)):
     return crud.get_users(db)
 
 @app.get("/me")
@@ -164,3 +163,11 @@ def dashboard(request: Request):
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=303)
+
+@app.get("/leaves/calendar", response_class=HTMLResponse)
+def show_calendar(request: Request, db: Session = Depends(get_db)):
+    leaves = crud.get_leaves(db)
+    return templates.TemplateResponse("calendar.html", {
+        "request": request,
+        "leaves": leaves
+    })
