@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models import Leave
 from models import User as Userm
 from schemas import LeaveCreate, UserCreate
@@ -16,7 +16,7 @@ def create_leave(db: Session, leave: LeaveCreate, user_id: int):
     return db_leave
 
 def get_leaves(db: Session):
-    return db.query(Leave).all()
+    return db.query(Leave).options(joinedload(Leave.owner)).all()
 
 def create_user(db: Session, user: UserCreate):
     db_user = Userm(

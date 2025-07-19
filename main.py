@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, Header, Request, Form
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.requests import Request
 from sqlalchemy.orm import Session 
 from database import engine, SessionLocal
 from models import Base, User as Userm, Leave
 from schemas import LeaveCreate, Leave as LeaveSchema, UserCreate, User
-import crud
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
+import crud
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -115,9 +115,11 @@ def submit_leave_form(
     db.commit()
     return RedirectResponse(url="/leaves/html", status_code=303)
 
-
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request, db: Session = Depends(get_db)):
+    if request.session.get("user_id"):
+        return RedirectResponse(url="/dashboard", status_code=303)
+
     users = db.query(Userm).all()
     return templates.TemplateResponse("login.html", {
         "request": request,
@@ -125,15 +127,40 @@ def login_form(request: Request, db: Session = Depends(get_db)):
     })
 
 @app.post("/login")
-def login(request: Request, db: Session = Depends(get_db), 
-          username: str = Form(...), password: str = Form(...)):
-    user = db.query(Userm).filter_by(name=username).first()
+def login(request: Request, db: Session = Depends(get_db), name: str = Form(...), password: str = Form(...)):
+    user = db.query(Userm).filter_by(name=name).first()
+
     if not user or user.password != password:
+        users = db.query(Userm).all()
         return templates.TemplateResponse("login.html", {
             "request": request,
             "error": "Nieprawidłowa nazwa użytkownika lub hasło",
-            "users": db.query(Userm).all()
+            "users": users
         }, status_code=401)
 
     request.session["user_id"] = user.id
-    return RedirectResponse(url="/leaves/html", status_code=303)
+    request.session["user_name"] = user.name
+    return RedirectResponse(url="/dashboard", status_code=303)
+
+
+@app.get("/leaves/my", response_class=HTMLResponse)
+def get_my_leaves(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+
+    leaves = db.query(Leave).filter_by(user_id=user_id).all()
+    return templates.TemplateResponse("my_leaves.html", {"request": request, "leaves": leaves})
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+
+    return RedirectResponse("/leaves/html", status_code=303)
+
+@app.post("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=303)

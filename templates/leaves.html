@@ -1,38 +1,32 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Lista urlopów</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h1 class="mb-4">Lista urlopów</h1>
+{% extends "base.html" %}
 
-        <table class="table table-striped table-bordered shadow-sm bg-white">
-            <thead class="table-primary">
-                <tr>
-                    <th>ID</th>
-                    <th>Użytkownik ID</th>
-                    <th>Data od</th>
-                    <th>Data do</th>
-                    <th>Komentarz</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for leave in leaves %}
-                <tr>
-                    <td>{{ leave.id }}</td>
-                    <td>{{ leave.user_id }}</td>
-                    <td>{{ leave.date_from }}</td>
-                    <td>{{ leave.date_to }}</td>
-                    <td>{{ leave.comment }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+{% block title %}Lista urlopów{% endblock %}
 
-        <a href="/leaves/form" class="btn btn-primary mt-3">Dodaj nowy urlop</a>
-    </div>
-</body>
-</html>
+{% block content %}
+    <h1 class="mb-4">Lista urlopów</h1>
+
+    <table class="table table-striped table-bordered shadow-sm bg-white">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Imię</th>
+                <th>Data od</th>
+                <th>Data do</th>
+                <th>Komentarz</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in leaves %}
+            <tr>
+                <td>{{ leave.id }}</td>
+                <td>{{ leave.owner.name }}</td>
+                <td>{{ leave.date_from }}</td>
+                <td>{{ leave.date_to }}</td>
+                <td>{{ leave.comment }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/leaves/form" class="btn btn-primary mt-3">Dodaj nowy urlop</a>
+{% endblock %}
