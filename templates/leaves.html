@@ -4,13 +4,26 @@
 
 {% block content %}
     <h1 class="mb-4">Lista urlopów</h1>
+    <form method="get" action="/leaves/html" class="mb-4">
+        <label for="user_id" class="form-label">Filtruj po użytkowniku:</label>
+        <select name="user_id" id="user_id" class="form-select" onchange="this.form.submit()">
+            <option value="">-- Wszyscy użytkownicy --</option>
+            {% for user in users %}
+                <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                    {{ user.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
 
-    <table class="table table-striped table-bordered shadow-sm bg-white">
+
+
+    <table id="leavesTable"class="table table-striped table-bordered shadow-sm bg-white">
         <thead class="table-primary">
             <tr>
                 <th>Imię</th>
-                <th>Data od</th>
-                <th>Data do</th>
+                <th onclik="sortTable(2)">Data od</th>
+                <th onclik="sortTable(3)">Data do</th>
                 <th>Komentarz</th>
                 {% if request.session.get("role") == "admin" %}
                 <th style="width: 150px">Akcje</th>
@@ -39,6 +52,6 @@
             {% endfor %}
         </tbody>
     </table>
-
     <a href="/leaves/form" class="btn btn-primary mt-3">Dodaj nowy urlop</a>
+
 {% endblock %}

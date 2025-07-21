@@ -10,7 +10,7 @@
                 Nowy urlop
             {% endif %}
         </h1>
-        <form method="post" action="/leaves/edit/{{ leave.id }}" class="card p-4 shadow-sm bg-white">
+            <form method="post" action="{{ '/leaves/edit/' ~ leave.id if edit is defined and edit else '/leaves/form' }}" class="card p-4 shadow-sm bg-white">
             <div class="mb-3">
                 <label for="user_name" class="form-label">Użytkownik:</label>
                 {% if edit %}

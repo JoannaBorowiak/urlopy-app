@@ -6,6 +6,9 @@ from database import engine, SessionLocal
 from models import Base, User as Userm, Leave
 from schemas import LeaveCreate, Leave as LeaveSchema, UserCreate, User
 from starlette.middleware.sessions import SessionMiddleware
+from datetime import date
+from typing import Optional
+from fastapi import Request, Query
 import crud
 
 app = FastAPI()
@@ -85,8 +88,39 @@ def delete_leave(leave_id: int,
 
 @app.get("/leaves/html", response_class=HTMLResponse)
 def get_leaves_html(request: Request, db: Session = Depends(get_db)):
-    leaves = crud.get_leaves(db)
-    return templates.TemplateResponse("leaves.html", {"request": request, "leaves": leaves})
+    # user_id jako string
+    user_id_param = request.query_params.get("user_id")
+
+    # próba konwersji user_id do int jeśli podano wartość
+    try:
+        user_id = int(user_id_param) if user_id_param else None
+    except ValueError:
+        # Jeśli user_id nie da się skonwertować — przekieruj bez filtra
+        return RedirectResponse("/leaves/html", status_code=303)
+
+    query = db.query(Leave)
+
+    if user_id:
+        query = query.filter(Leave.user_id == user_id)
+
+    all_leaves = query.all()
+    today = date.today()
+
+    upcoming = [l for l in all_leaves if l.date_to >= today]
+    past = [l for l in all_leaves if l.date_to < today]
+    upcoming.sort(key=lambda l: l.date_from)
+    past.sort(key=lambda l: l.date_from)
+
+    sorted_leaves = upcoming + past
+    users = db.query(Userm).all()
+
+    return templates.TemplateResponse("leaves.html", {
+        "request": request,
+        "leaves": sorted_leaves,
+        "users": users,
+        "selected_user_id": user_id
+    })
+
 
 @app.get("/leaves/form", response_class=HTMLResponse)
 def show_leave_form(request: Request):
