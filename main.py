@@ -10,6 +10,7 @@ from datetime import date, timedelta
 from typing import Optional
 from fastapi import Request, Query
 import crud
+from crud import get_polish_holidays
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -151,7 +152,7 @@ def submit_leave_form(
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request, db: Session = Depends(get_db)):
     if request.session.get("user_id"):
-        return RedirectResponse(url="/dashboard", status_code=303)
+        return RedirectResponse(url="leaves/calendar", status_code=303)
 
     users = db.query(Userm).all()
     return templates.TemplateResponse("login.html", {
@@ -174,7 +175,7 @@ def login(request: Request, db: Session = Depends(get_db), name: str = Form(...)
     request.session["user_id"] = user.id
     request.session["user_name"] = user.name
     request.session["role"] = user.role
-    return RedirectResponse(url="/dashboard", status_code=303)
+    return RedirectResponse(url="leaves/calendar", status_code=303)
 
 
 @app.get("/leaves/my", response_class=HTMLResponse)
@@ -191,12 +192,23 @@ def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=303)
 
+from datetime import timedelta
+
 @app.get("/leaves/calendar", response_class=HTMLResponse)
 def show_calendar(request: Request, db: Session = Depends(get_db)):
     leaves = crud.get_leaves(db)
+
+    # Skopiuj i dostosuj daty, dodając +1 dzień do końca
+    adjusted_leaves = []
+    for leave in leaves:
+        adjusted_leave = leave.__dict__.copy()
+        adjusted_leave["owner"] = leave.owner  # bo jest używane w HTML
+        adjusted_leave["date_to"] = leave.date_to + timedelta(days=1)
+        adjusted_leaves.append(adjusted_leave)
+
     return templates.TemplateResponse("calendar.html", {
         "request": request,
-        "leaves": leaves
+        "leaves": adjusted_leaves
     })
 
 @app.get("/leaves/edit/{leave_id}", response_class=HTMLResponse)
@@ -251,21 +263,6 @@ def delete_leave_post(
     db.commit()
 
     return RedirectResponse(url="/leaves/html", status_code=303)
-
-
-def get_polish_holidays(year: int):
-    # Statyczna lista świąt ustawowych (bez Wielkanocy i Bożego Ciała na razie)
-    return {
-        date(year, 1, 1),   # Nowy Rok
-        date(year, 1, 6),   # Trzech Króli
-        date(year, 5, 1),   # Święto Pracy
-        date(year, 5, 3),   # Święto Konstytucji 3 Maja
-        date(year, 8, 15),  # Wniebowzięcie NMP
-        date(year, 11, 1),  # Wszystkich Świętych
-        date(year, 11, 11), # Święto Niepodległości
-        date(year, 12, 25), # Boże Narodzenie
-        date(year, 12, 26), # Drugi dzień świąt
-    }
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):

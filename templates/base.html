@@ -34,7 +34,11 @@
             </button>
             <button class="btn btn-outline-light" type="submit">Wyloguj</button>
         </form>
-        {% endif %}
+      {% else %}
+        <form class="d-flex" action="/login" method="get">
+          <button class="btn btn-outline-light" type="submit">Zaloguj</button>
+        </form>
+      {% endif %}
     </div>
   </div>
 </nav>

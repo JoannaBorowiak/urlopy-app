@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Nowy urlop{% endblock %}
+
+{% block content %}
+        <h1 class="mb-4">Edytuj urlop</h1>
+        <form method="post" action="/leaves/form" class="card p-4 shadow-sm bg-white">
+            <div class="mb-3">
+                <label for="username" class="form-label">Nazwa użytkownika</label>
+                <select class="form-select" id="name" name="name" required>
+                <option value="">Wybierz z listy</option>
+                {% for user in users %}
+                    <option value="{{ user.name }}">{{ user.name }}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="date_from" class="form-label">Data od:</label>
+                <input type="date" id="date_from" name="date_from" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="date_to" class="form-label">Data do:</label>
+                <input type="date" id="date_to" name="date_to" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="comment" class="form-label">Komentarz:</label>
+                <input type="text" id="comment" name="comment" class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Zapisz urlop</button>
+        </form>
+{% endblock %}

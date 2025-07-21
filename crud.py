@@ -3,7 +3,7 @@ from models import Leave
 from models import User as Userm
 from schemas import LeaveCreate, UserCreate
 from datetime import timedelta, date
-import holidays
+from holidays import Poland
 
 def create_leave(db: Session, leave: LeaveCreate, user_id: int):
     db_leave = Leave(
@@ -34,3 +34,6 @@ def create_user(db: Session, user: UserCreate):
 
 def get_users(db: Session):
     return db.query(Userm).all()
+
+def get_polish_holidays(year: int):
+    return set(Poland(years=year).keys())
