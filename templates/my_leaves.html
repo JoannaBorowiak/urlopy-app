@@ -3,23 +3,24 @@
 {% block title %}Moje urlopy{% endblock %}
 
 {% block content %}
-<h2 class="text-center mb-4">Moje urlopy</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Data od</th>
-            <th>Data do</th>
-            <th>Komentarz</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for leave in leaves %}
-        <tr>
-            <td>{{ leave.date_from }}</td>
-            <td>{{ leave.date_to }}</td>
-            <td>{{ leave.comment or '' }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h2 class="mb-4">Moje urlopy</h2>
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>Data od</th>
+                <th>Data do</th>
+                <th>Komentarz</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in leaves %}
+            <tr>
+                <td>{{ leave.date_from }}</td>
+                <td>{{ leave.date_to }}</td>
+                <td>{{ leave.comment or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

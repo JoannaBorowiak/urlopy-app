@@ -6,7 +6,7 @@ from database import engine, SessionLocal
 from models import Base, User as Userm, Leave
 from schemas import LeaveCreate, Leave as LeaveSchema, UserCreate, User
 from starlette.middleware.sessions import SessionMiddleware
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 from fastapi import Request, Query
 import crud
@@ -186,14 +186,6 @@ def get_my_leaves(request: Request, db: Session = Depends(get_db)):
     leaves = db.query(Leave).filter_by(user_id=user_id).all()
     return templates.TemplateResponse("my_leaves.html", {"request": request, "leaves": leaves})
 
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard(request: Request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse("/login", status_code=303)
-
-    return RedirectResponse("/leaves/html", status_code=303)
-
 @app.post("/logout")
 def logout(request: Request):
     request.session.clear()
@@ -259,3 +251,64 @@ def delete_leave_post(
     db.commit()
 
     return RedirectResponse(url="/leaves/html", status_code=303)
+
+
+def get_polish_holidays(year: int):
+    # Statyczna lista świąt ustawowych (bez Wielkanocy i Bożego Ciała na razie)
+    return {
+        date(year, 1, 1),   # Nowy Rok
+        date(year, 1, 6),   # Trzech Króli
+        date(year, 5, 1),   # Święto Pracy
+        date(year, 5, 3),   # Święto Konstytucji 3 Maja
+        date(year, 8, 15),  # Wniebowzięcie NMP
+        date(year, 11, 1),  # Wszystkich Świętych
+        date(year, 11, 11), # Święto Niepodległości
+        date(year, 12, 25), # Boże Narodzenie
+        date(year, 12, 26), # Drugi dzień świąt
+    }
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard(request: Request, db: Session = Depends(get_db)):
+    users = db.query(Userm).all()
+    leaves = db.query(Leave).all()
+    current_year = date.today().year
+
+    user_summary = []
+
+    holidays = get_polish_holidays(current_year)
+
+    for user in users:
+        user_leaves = [l for l in leaves if l.user_id == user.id]
+
+        days_past = 0
+        days_future = 0
+        today = date.today()
+
+        for leave in user_leaves:
+            start = max(leave.date_from, date(current_year, 1, 1))
+            end = min(leave.date_to, date(current_year, 12, 31))
+            if start <= end:
+                current = start
+                while current <= end:
+                    if current.weekday() < 5 and current not in holidays:
+                        if current <= today:
+                            days_past += 1
+                        else:
+                            days_future += 1
+                    current += timedelta(days=1)
+
+        user_summary.append({
+            "name": user.name,
+            "email": user.email,
+            "days_past": days_past,
+            "days_future": days_future,
+            "days_total": days_past + days_future
+        })
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user_summary": user_summary,
+        "year": current_year
+    })
+
+

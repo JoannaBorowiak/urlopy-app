@@ -15,43 +15,41 @@
             {% endfor %}
         </select>
     </form>
-
-
-
-    <table id="leavesTable"class="table table-striped table-bordered shadow-sm bg-white">
-        <thead class="table-primary">
-            <tr>
-                <th>Imię</th>
-                <th onclik="sortTable(2)">Data od</th>
-                <th onclik="sortTable(3)">Data do</th>
-                <th>Komentarz</th>
+    <div class="table-responsive">
+        <table id="leavesTable"class="table table-striped table-bordered shadow-sm bg-white">
+            <thead class="table-primary">
+                <tr>
+                    <th>Imię</th>
+                    <th onclik="sortTable(2)">Data od</th>
+                    <th onclik="sortTable(3)">Data do</th>
+                    <th>Komentarz</th>
+                    {% if request.session.get("role") == "admin" %}
+                    <th style="width: 150px">Akcje</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in leaves %}
+                <tr>
+                    <td>{{ leave.owner.name }}</td>
+                    <td>{{ leave.date_from }}</td>
+                    <td>{{ leave.date_to }}</td>
+                    <td>{{ leave.comment }}</td>
+                    
                 {% if request.session.get("role") == "admin" %}
-                <th style="width: 150px">Akcje</th>
+                    <td>
+                        <a href="/leaves/edit/{{ leave.id }}" class="btn btn-sm btn-warning">Edytuj</a>
+                        <form method="post" action="/leaves/delete/{{ leave.id }}" style="display:inline;"
+                            onsubmit="return confirm('Czy na pewno chcesz usunąć ten urlop?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                    </td>
                 {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for leave in leaves %}
-            <tr>
-                <td>{{ leave.owner.name }}</td>
-                <td>{{ leave.date_from }}</td>
-                <td>{{ leave.date_to }}</td>
-                <td>{{ leave.comment }}</td>
-                
-            {% if request.session.get("role") == "admin" %}
-                <td>
-                    <a href="/leaves/edit/{{ leave.id }}" class="btn btn-sm btn-warning">Edytuj</a>
-                    <form method="post" action="/leaves/delete/{{ leave.id }}" style="display:inline;"
-                        onsubmit="return confirm('Czy na pewno chcesz usunąć ten urlop?');">
-                        <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
-                    </form>
-                </td>
-            {% endif %}
- 
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     <a href="/leaves/form" class="btn btn-primary mt-3">Dodaj nowy urlop</a>
-
 {% endblock %}
