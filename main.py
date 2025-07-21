@@ -100,7 +100,7 @@ def submit_leave_form(
     comment: str = Form(None),
     db: Session = Depends(get_db)
 ):
-    user_id = request.session.get("user_id")  # <- to musi być W CIELE FUNKCJI
+    user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse("/login", status_code=303)
 
@@ -139,6 +139,7 @@ def login(request: Request, db: Session = Depends(get_db), name: str = Form(...)
 
     request.session["user_id"] = user.id
     request.session["user_name"] = user.name
+    request.session["role"] = user.role
     return RedirectResponse(url="/dashboard", status_code=303)
 
 
@@ -171,3 +172,56 @@ def show_calendar(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "leaves": leaves
     })
+
+@app.get("/leaves/edit/{leave_id}", response_class=HTMLResponse)
+def edit_leave_form(
+    request: Request,
+    leave_id: int,
+    db: Session = Depends(get_db)
+):
+    leave = db.query(Leave).filter_by(id=leave_id).first()
+    if not leave:
+        return HTMLResponse(content="Urlop nie istnieje", status_code=404)
+
+    return templates.TemplateResponse("leave_form.html", {
+        "request": request,
+        "leave": leave,
+        "edit": True
+    })
+
+@app.post("/leaves/edit/{leave_id}")
+def edit_leave_submit(
+    request: Request,
+    leave_id: int,
+    date_from: str = Form(...),
+    date_to: str = Form(...),
+    comment: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    leave = db.query(Leave).filter_by(id=leave_id).first()
+    if not leave:
+        return HTMLResponse(content="Urlop nie istnieje", status_code=404)
+
+    leave.date_from = date_from
+    leave.date_to = date_to
+    leave.comment = comment
+    db.commit()
+    return RedirectResponse(url="/leaves/html", status_code=303)
+
+@app.post("/leaves/delete/{leave_id}")
+def delete_leave_post(
+    request: Request,
+    leave_id: int,
+    db: Session = Depends(get_db)
+):
+    if request.session.get("role") != "admin":
+        return HTMLResponse("Brak uprawnień", status_code=403)
+
+    leave = db.query(Leave).filter_by(id=leave_id).first()
+    if not leave:
+        return HTMLResponse("Urlop nie istnieje", status_code=404)
+
+    db.delete(leave)
+    db.commit()
+
+    return RedirectResponse(url="/leaves/html", status_code=303)

@@ -3,21 +3,40 @@
 {% block title %}Nowy urlop{% endblock %}
 
 {% block content %}
-        <h1 class="mb-4">Nowy urlop</h1>
-        <form method="post" action="/leaves/form" class="card p-4 shadow-sm bg-white">
+        <h1 class="mb-4">
+            {% if edit is defined and edit %}
+                Edytuj urlop
+            {% else %}
+                Nowy urlop
+            {% endif %}
+        </h1>
+        <form method="post" action="/leaves/edit/{{ leave.id }}" class="card p-4 shadow-sm bg-white">
+            <div class="mb-3">
+                <label for="user_name" class="form-label">Użytkownik:</label>
+                {% if edit %}
+                    <input type="text" id="user_name" name="user_name" class="form-control" 
+                        value="{{ leave.owner.name }}" disabled>
+                {% else %}
+                    <input type="text" class="form-control" 
+                        value="{{ request.session.get('user_name') }}" disabled>
+                {% endif %}
+            </div>
             <div class="mb-3">
                 <label for="date_from" class="form-label">Data od:</label>
-                <input type="date" id="date_from" name="date_from" class="form-control" required>
+                <input type="date" id="date_from" name="date_from" class="form-control" required
+                 value="{{ leave.date_from.strftime('%Y-%m-%d') if edit and leave.date_from else '' }}">
+
             </div>
             <div class="mb-3">
                 <label for="date_to" class="form-label">Data do:</label>
-                <input type="date" id="date_to" name="date_to" class="form-control" required>
+                <input type="date" id="date_to" name="date_to" class="form-control" required
+                value="{{ leave.date_to.strftime('%Y-%m-%d') if edit and leave.date_to else '' }}">
             </div>
             <div class="mb-3">
                 <label for="comment" class="form-label">Komentarz:</label>
-                <input type="text" id="comment" name="comment" class="form-control">
+                <input type="text" id="comment" name="comment" class="form-control"
+                value="{{ leave.comment if edit else '' }}">
             </div>
-
             <button type="submit" class="btn btn-primary">Zapisz urlop</button>
         </form>
 {% endblock %}

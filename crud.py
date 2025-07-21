@@ -10,7 +10,7 @@ def create_leave(db: Session, leave: LeaveCreate, user_id: int):
         user_id=user_id,
         date_from=leave.date_from,
         date_to=leave.date_to,
-        comment=leave.comment
+        comment=leave.comment,
     )
     db.add(db_leave)
     db.commit()
