@@ -37,7 +37,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var calendarEl = document.getElementById('calendar');
 
-    // Przypisanie kolorów do user_id
     const userColors = {
         {% for leave in leaves %}
         {{ leave.user_id }}: '{{ ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6610f2', '#17a2b8', '#6f42c1', '#fd7e14'][(loop.index0) % 8] }}'{% if not loop.last %},{% endif %}

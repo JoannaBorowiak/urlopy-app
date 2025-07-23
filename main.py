@@ -12,6 +12,7 @@ from fastapi import Request, Query
 import crud
 from crud import get_polish_holidays
 import bcrypt
+import smtplib
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -148,6 +149,22 @@ def submit_leave_form(
     )
     db.add(new_leave)
     db.commit()
+
+    from utils import send_leave_notification
+
+    admins = db.query(Userm).filter_by(role="admin").all()
+    admin_emails = [a.email for a in admins]
+
+    user = db.query(Userm).filter_by(id=user_id).first()
+
+    send_leave_notification(
+        admin_emails=admin_emails,
+        employee_name=user.name,
+        date_from=new_leave.date_from,
+        date_to=new_leave.date_to,
+        comment=new_leave.comment
+    )
+
     return RedirectResponse(url="/leaves/html", status_code=303)
 
 @app.get("/login", response_class=HTMLResponse)
@@ -266,7 +283,7 @@ def delete_leave_post(
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    users = db.query(Userm).all()
+    users = db.query(Userm).order_by(Userm.name).all()
     leaves = db.query(Leave).all()
 
     years_in_db = sorted({l.date_from.year for l in leaves} | {l.date_to.year for l in leaves})
@@ -311,7 +328,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "days_total": days_past + days_future
         })
 
-        return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "user_summary": user_summary,
         "year": current_year,
