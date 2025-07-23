@@ -3,9 +3,21 @@
 {% block title %}Kalendarz urlopów{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Kalendarz urlopów</h2>
-<div id="calendar"></div>
+<h2 class="mb-4 text-center">Kalendarz urlopów</h2>
+<div class="calendar-wrapper mx-auto">
+  <div id="calendar"></div>
+</div>
 <style>
+  .calendar-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  #calendar {
+    width: 100%;
+  }
+
   .fc .fc-col-header-cell-cushion,
   .fc .fc-daygrid-day-number {
     color: black !important;
@@ -29,6 +41,7 @@
     font-size: 1.3rem;
   }
 </style>
+
 
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>

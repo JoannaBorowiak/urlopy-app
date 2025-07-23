@@ -19,8 +19,10 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/leaves/calendar">Kalendarz urlopów</a></li>
         <li class="nav-item"><a class="nav-link" href="/leaves/html">Lista urlopów</a></li>
-        <li class="nav-item"><a class="nav-link" href="/leaves/form">Dodaj urlop</a></li>
-        <li class="nav-item"><a class="nav-link" href="/leaves/my">Moje urlopy</a></li>
+        {% if request.session.get("user_id") %}
+          <li class="nav-item"><a class="nav-link" href="/leaves/form">Dodaj urlop</a></li>
+          <li class="nav-item"><a class="nav-link" href="/leaves/my">Moje urlopy</a></li>
+        {%endif%}
         <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
       </ul>
 

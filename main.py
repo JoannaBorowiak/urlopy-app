@@ -20,6 +20,13 @@ app.add_middleware(SessionMiddleware, secret_key="klucz")
 
 Base.metadata.create_all(bind=engine)
 
+def require_login(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        request.session["login_required"] = "Zaloguj się, aby uzyskać dostęp"
+        return False
+    return True
+
 def get_db():
     db = SessionLocal()
     try:
@@ -91,6 +98,8 @@ def delete_leave(leave_id: int,
 
 @app.get("/leaves/html", response_class=HTMLResponse)
 def get_leaves_html(request: Request, db: Session = Depends(get_db)):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     # user_id jako string
     user_id_param = request.query_params.get("user_id")
 
@@ -127,6 +136,8 @@ def get_leaves_html(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/leaves/form", response_class=HTMLResponse)
 def show_leave_form(request: Request):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     return templates.TemplateResponse("leave_form.html", {"request": request})
 
 @app.post("/leaves/form")
@@ -172,10 +183,12 @@ def login_form(request: Request, db: Session = Depends(get_db)):
     if request.session.get("user_id"):
         return RedirectResponse(url="leaves/calendar", status_code=303)
 
+    error = request.session.pop("login_required", None)
     users = db.query(Userm).all()
     return templates.TemplateResponse("login.html", {
         "request": request,
-        "users": users
+        "users": users,
+        "error": error
     })
 
 @app.post("/login")
@@ -214,6 +227,8 @@ from datetime import timedelta
 
 @app.get("/leaves/calendar", response_class=HTMLResponse)
 def show_calendar(request: Request, db: Session = Depends(get_db)):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     leaves = crud.get_leaves(db)
 
     adjusted_leaves = []
@@ -234,6 +249,8 @@ def edit_leave_form(
     leave_id: int,
     db: Session = Depends(get_db)
 ):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     leave = db.query(Leave).filter_by(id=leave_id).first()
     if not leave:
         return HTMLResponse(content="Urlop nie istnieje", status_code=404)
@@ -283,6 +300,8 @@ def delete_leave_post(
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     users = db.query(Userm).order_by(Userm.name).all()
     leaves = db.query(Leave).all()
 
@@ -338,6 +357,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/my-account", response_class=HTMLResponse)
 def my_account(request: Request, db: Session = Depends(get_db)):
+    if not require_login(request):
+        return RedirectResponse("/login", status_code=303)
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse("/login", status_code=303)
