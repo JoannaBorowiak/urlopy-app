@@ -20,8 +20,8 @@
             <thead class="table-primary">
                 <tr>
                     <th>Imię</th>
-                    <th onclik="sortTable(2)">Data od</th>
-                    <th onclik="sortTable(3)">Data do</th>
+                    <th onclick="sortTable(2)">Data od</th>
+                    <th onclick="sortTable(3)">Data do</th>
                     <th>Komentarz</th>
                     {% if request.session.get("role") == "admin" %}
                     <th style="width: 150px">Akcje</th>

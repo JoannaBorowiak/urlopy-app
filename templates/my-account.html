@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Moje konto{% endblock %}
+
+{% block content %}
+<h2>Moje konto</h2>
+<div class="card p-3">
+    <p><strong>Imię:</strong> {{ user.name }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Rola:</strong> {{ user.role }}</p>
+    <a href="/change-password" class="btn btn-primary mt-3">Zmień hasło</a>
+
+</div>
+{% endblock %}

@@ -28,12 +28,16 @@
         </li>
       </ul>
       {% if request.session.get("user_id") %}
-        <form class="d-flex" action="/logout" method="post">
-            <button class="btn btn-outline-light me-2" type="button" disabled>
-                {{ request.session.get("user_name") }}
-            </button>
-            <button class="btn btn-outline-light" type="submit">Wyloguj</button>
+        <form class="d-flex me-2" action="/my-account" method="get">
+          <button class="btn btn-outline-light" type="submit">
+            {{ request.session.get("user_name") }}
+          </button>
         </form>
+
+        <form class="d-flex" action="/logout" method="post">
+          <button class="btn btn-outline-light" type="submit">Wyloguj</button>
+        </form>
+
       {% else %}
         <form class="d-flex" action="/login" method="get">
           <button class="btn btn-outline-light" type="submit">Zaloguj</button>

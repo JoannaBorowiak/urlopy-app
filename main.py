@@ -11,6 +11,7 @@ from typing import Optional
 from fastapi import Request, Query
 import crud
 from crud import get_polish_holidays
+import bcrypt
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -46,7 +47,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.get("/users/", response_model=list[User])
-def get_leaves(db: Session = Depends(get_db)):
+def read_users(db: Session = Depends(get_db)):
     return crud.get_users(db)
 
 @app.get("/me")
@@ -164,7 +165,7 @@ def login_form(request: Request, db: Session = Depends(get_db)):
 def login(request: Request, db: Session = Depends(get_db), name: str = Form(...), password: str = Form(...)):
     user = db.query(Userm).filter_by(name=name).first()
 
-    if not user or user.password != password:
+    if not user or not verify_password(password, user.password):
         users = db.query(Userm).all()
         return templates.TemplateResponse("login.html", {
             "request": request,
@@ -198,7 +199,6 @@ from datetime import timedelta
 def show_calendar(request: Request, db: Session = Depends(get_db)):
     leaves = crud.get_leaves(db)
 
-    # Skopiuj i dostosuj daty, dodając +1 dzień do końca
     adjusted_leaves = []
     for leave in leaves:
         adjusted_leave = leave.__dict__.copy()
@@ -268,7 +268,16 @@ def delete_leave_post(
 def dashboard(request: Request, db: Session = Depends(get_db)):
     users = db.query(Userm).all()
     leaves = db.query(Leave).all()
-    current_year = date.today().year
+
+    years_in_db = sorted({l.date_from.year for l in leaves} | {l.date_to.year for l in leaves})
+    
+    selected_year = request.query_params.get("year")
+    try:
+        current_year = int(selected_year)
+        if current_year not in years_in_db:
+            current_year = max(years_in_db) if years_in_db else date.today().year
+    except (TypeError, ValueError):
+        current_year = max(years_in_db) if years_in_db else date.today().year
 
     user_summary = []
 
@@ -302,10 +311,57 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "days_total": days_past + days_future
         })
 
-    return templates.TemplateResponse("dashboard.html", {
+        return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "user_summary": user_summary,
-        "year": current_year
+        "year": current_year,
+        "selected_year": current_year,
+        "years": years_in_db
     })
 
+@app.get("/my-account", response_class=HTMLResponse)
+def my_account(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+    
+    user = db.query(Userm).filter_by(id=user_id).first()
+    if not user:
+        return HTMLResponse("Użytkownik nie znaleziony", status_code=404)
 
+    return templates.TemplateResponse("my-account.html", {"request": request, "user": user})
+
+@app.get("/change-password", response_class=HTMLResponse)
+def change_password_form(request: Request):
+    if not request.session.get("user_id"):
+        return RedirectResponse("/login", status_code=303)
+    return templates.TemplateResponse("change_password.html", {"request": request})
+
+@app.post("/change-password", response_class=HTMLResponse)
+def change_password_submit(
+    request: Request,
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/login", status_code=303)
+
+    user = db.query(Userm).filter_by(id=user_id).first()
+    if not user or not verify_password(old_password, user.password):
+        return templates.TemplateResponse("change_password.html", {
+            "request": request,
+            "error": "Stare hasło jest nieprawidłowe"
+        }, status_code=400)
+
+    user.password = hash_password(new_password)
+    db.commit()
+
+    return RedirectResponse("/my-account", status_code=303)
+
+def hash_password(plain_password: str) -> str:
+    return bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
