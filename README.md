@@ -11,7 +11,7 @@ Aplikacja webowa napisana w FastAPI i SQLAlchemy, która umożliwia zarządzanie
 - Powiadomienia e-mail – automatyczna wysyłka wiadomości po dodaniu urlopu.
   
 # Kalendarz urlopów
-![Kalendarz urlopów](screenshots/calendar.png)
+![Kalendarz urlopów](screenshots/Calendar.png)
 
 # Technologie
 - Backend: FastAPI, SQLAlchemy, Pydantic
