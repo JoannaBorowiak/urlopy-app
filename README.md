@@ -1,6 +1,4 @@
-<img width="1413" height="823" alt="image" src="https://github.com/user-attachments/assets/2396c330-9db1-485f-92a5-989f57d70838" /># Aplikacja urlopów
-
-Urlopy App to aplikacja webowa napisana w FastAPI i SQLAlchemy, która umożliwia zarządzanie urlopami pracowników. Projekt pozwala na dodawanie, edytowanie i usuwanie wniosków urlopowych, a także przeglądanie ich w formie listy, kalendarza oraz dashboardu z podsumowaniem.
+Urlopy-app to aplikacja webowa napisana w FastAPI i SQLAlchemy, która umożliwia zarządzanie urlopami pracowników. Projekt pozwala na dodawanie, edytowanie i usuwanie wniosków urlopowych, a także przeglądanie ich w formie listy, kalendarza oraz dashboardu z podsumowaniem.
 
 # Funkcjonalności
 - Logowanie i role – użytkownicy mogą logować się do systemu, a administratorzy mają dodatkowe uprawnienia.
